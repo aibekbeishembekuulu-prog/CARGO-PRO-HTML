@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ky">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CARGO PRO — QR Scanner</title>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    .panel {
+      max-width: 460px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 14px;
+    }
+
+    h2 {
+      color: #c62828;
+    }
+
+    button {
+      padding: 13px 20px;
+      margin: 8px;
+      border: 0;
+      border-radius: 8px;
+      background: #c62828;
+      color: white;
+      font-weight: bold;
+    }
+
+    #reader {
+      width: 100%;
+      margin: 15px auto;
+    }
+
+    #message {
+      margin-top: 15px;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="panel">
+    <h2>📷 CARGO PRO QR</h2>
+
+    <div id="reader"></div>
+
+    <button onclick="startScanner()">СКАНЕРДИ ИШТЕТҮҮ</button>
+    <button onclick="stopScanner()">ТОКТОТУУ</button>
+
+    <div id="message">Сканерди иштетиңиз</div>
+  </div>
+
+<script>
+  let scanner = null;
+  let busy = false;
+
+  function showMessage(message) {
+    document.getElementById("message").textContent = message;
+  }
+
+  async function startScanner() {
+    try {
+      if (scanner) {
+        try {
+          await scanner.stop();
+        } catch (e) {}
+        scanner = null;
+      }
+
+      scanner = new Html5Qrcode("reader");
+
+      await scanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 180 }
+        },
+        function(decodedText) {
+          if (busy) return;
+
+          busy = true;
+
+          const clientCode = String(decodedText).trim();
+
+          showMessage("Кардардын коду: " + clientCode);
+
+          window.parent.postMessage({
+            type: "CARGO_PRO_QR",
+            clientCode: clientCode
+          }, "*");
+
+          setTimeout(function() {
+            busy = false;
+          }, 2000);
+        }
+      );
+
+      showMessage("Камера иштеп жатат");
+
+    } catch (error) {
+      showMessage(
+        "Камера катасы: " +
+        (error.name || "") + " " +
+        (error.message || error)
+      );
+    }
+  }
+
+  async function stopScanner() {
+    if (scanner) {
+      try {
+        await scanner.stop();
+        showMessage("Сканер токтотулду");
+      } catch (error) {
+        showMessage("Токтотуу катасы: " + error);
+      }
+    }
+  }
+</script>
+
+</body>
+</html>
