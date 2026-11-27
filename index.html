@@ -97,10 +97,20 @@
 
           showMessage("Кардардын коду: " + clientCode);
 
-          window.parent.postMessage({
-            type: "CARGO_PRO_QR",
-            clientCode: clientCode
-          }, "*");
+          if (window.opener && !window.opener.closed) {
+
+  window.opener.postMessage({
+    type: "CARGO_PRO_QR",
+    clientCode: clientCode
+  }, "*");
+
+  showMessage("Кардардын коду CARGO PRO'го жөнөтүлдү.");
+
+} else {
+
+  showMessage("CARGO PRO терезеси табылган жок.");
+
+}
 
           setTimeout(function() {
             busy = false;
